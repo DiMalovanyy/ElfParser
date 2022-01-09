@@ -11,6 +11,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "file_type.h"
+
 int main(int argc, char **argv) {
 	int fd, i;
 	uint8_t *mem;
@@ -42,6 +44,12 @@ int main(int argc, char **argv) {
 	if (mem == MAP_FAILED) {
 		perror("mmap");
 		exit(-1);
+	}
+
+	switch(get_architecture(mem)) {
+		case X32: printf("X32\n"); break;
+		case X64: printf("X64\n"); break;
+		default: printf("UNDEFINED"); break;
 	}
 
 	/* The initial ELF Header starts ar offset 0 of our mapped memory */

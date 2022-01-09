@@ -52,7 +52,70 @@ int main(int argc, char **argv) {
 	phdr = (Elf32_Phdr*)&mem[ehdr->e_phoff];
 	shdr = (Elf32_Shdr*)&mem[ehdr->e_shoff];
 
+	/* Check to see if the ELF magic (The first 4 bytes) match up as
+	 * 0x7f E L  F */
+	if (mem[0] != 0x7f && strcmp(&mem[1], "ELF")) {
+		fprintf(stderr, "%s is not an ELF file\n", argv[1]);
+		exit(-1);
+	}
+
+	printf("Programm Entry point: 0x%x\n", ehdr->e_entry);
+
+	/* We find the string- table for the section header
+	 * names with e_shstrndx which gives the index of which 
+	 * section holds the string table.
+	 */
+	StringTable = &mem[shdr[ehdr->e_shstrndx].sh_offset];
+
+	
+	/* Print each section header name and address
+	 * Notice we get the index into the string table
+	 * that contains each section header name with the
+ 	 * shdr.sh_name member
+	 */
+	printf("Section header list:\n\n");
+	for(i = 1; i < ehdr->e_shnum; i++) {
+		printf("%s: 0x%x\n", &StringTable[shdr[i].sh_name], shdr[i].sh_addr);
+	}
 
 
-
+	/* Print out each segment name and address,
+	 * Except for PT_INTERP we print the path to the dynamic linker
+	 */
+	printf("Program header list\n\n");
+	for(i = 0; i < ehdr->e_phnum; i++) {
+		switch(phdr[i].p_type) {
+			case PT_LOAD:
+				/* We know that text segment starts
+				 * at offset 0. And only one other
+				 * possible loadable segment exists
+				 * which is the data segment
+				 */
+				if (phdr[i].p_offset == 0) {
+					printf("Text segment: 0x%x\n", phdr[i].p_vaddr);
+				} else {
+					printf("Data segment: 0x%x\n", phdr[i].p_vaddr);
+				}
+			break;
+			case PT_INTERP:
+				interp = strdup((char*)&mem[phdr[i].p_offset]);
+				if (interp == NULL) {
+					break;
+				}
+				printf("Interpreter: %s\n", interp);
+				free(interp);
+			break;
+			case PT_NOTE:
+				printf("Note segment: 0x%x\n", phdr[i].p_vaddr);
+			break;
+			case PT_DYNAMIC:
+				printf("Dynamic segment: 0x%x\n", phdr[i].p_vaddr);
+			break;
+			case PT_PHDR:
+				printf("Phdr segment: 0x%x\n", phdr[i].p_vaddr);
+			break;
+			default: break;
+		}
+	}
+	exit(0);
 }

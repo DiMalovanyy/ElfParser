@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
 	shdr = (Elf32_Shdr*)&mem[ehdr->e_shoff];
 
 	/* Check to see if the ELF magic (The first 4 bytes) match up as
-	 * 0x7f E L  F */
+	 * 0x7f E L F */
 	if (mem[0] != 0x7f && strcmp(&mem[1], "ELF")) {
 		fprintf(stderr, "%s is not an ELF file\n", argv[1]);
 		exit(-1);
